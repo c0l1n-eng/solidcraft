@@ -16,7 +16,8 @@
 //! - [`Mesh`]: an indexed triangle mesh with its edge polylines and their display flags;
 //! - [`curve_points`]: a free curve's points at a [`MeshTolerance`], by the edge rules;
 //! - [`simplify`]: display levels of detail of a large mesh;
-//! - [`preview`]: a bounded coarse mesh of a decoded body.
+//! - [`preview`]: a bounded coarse mesh of a decoded body;
+//! - [`flatten_faces`]: faces laid flat in the plane, for labels and wraps ([`FlatPiece`]).
 //!
 //! A display mesh decides nothing a model depends on: it is drawn, never measured.
 //!
@@ -26,6 +27,7 @@
 mod curve;
 #[cfg(test)]
 mod fixtures;
+mod flatten;
 mod hash;
 mod iso;
 mod mesh;
@@ -45,6 +47,7 @@ mod tolerance;
 mod vec;
 
 pub use curve::curve_points;
+pub use flatten::{FlatPiece, MAX_FLATTEN_TRIANGLES, flatten_faces, flatten_mesh};
 pub use iso::{MAX_ISOPARMS, isoparms};
 pub use mesh::Mesh;
 pub use mesher::{MAX_ANGLE_BOUNDARY, plan};
