@@ -16,8 +16,8 @@ use super::features::{add_feature, axis_param, check_expr, extent_param, feature
 use crate::params::{bad, bool_, expr, num, str_, string_list, vec3};
 use crate::schema::features::{FeatureResult, SurfaceSweepParams};
 use crate::schema::surface::{
-    FairParams, OffsetParams, PatchParams, PatchResult, ReverseNormalParams, StitchParams, SurfaceExtendParams, SurfaceLoftParams, SurfaceTrimParams,
-    ThickenParams, UnstitchParams, UntrimParams,
+    FairParams, FlattenParams, OffsetParams, PatchParams, PatchResult, ReverseNormalParams, StitchParams, SurfaceExtendParams, SurfaceLoftParams,
+    SurfaceTrimParams, ThickenParams, UnstitchParams, UntrimParams,
 };
 use crate::schema::surface_blend::BlendParams;
 use crate::schema::surface_profile::{SurfaceExtrudeParams, SurfaceRevolveParams};
@@ -31,6 +31,7 @@ const UNSTITCH_CONTRACT: TypedContract<UnstitchParams> = TypedContract::new();
 const REVERSE_NORMAL_CONTRACT: TypedContract<ReverseNormalParams> = TypedContract::new();
 const THICKEN_CONTRACT: TypedContract<ThickenParams> = TypedContract::new();
 const OFFSET_CONTRACT: TypedContract<OffsetParams> = TypedContract::new();
+const FLATTEN_CONTRACT: TypedContract<FlattenParams> = TypedContract::new();
 const UNTRIM_CONTRACT: TypedContract<UntrimParams> = TypedContract::new();
 const FAIR_CONTRACT: TypedContract<FairParams> = TypedContract::new();
 const SURFACE_EXTEND_CONTRACT: TypedContract<SurfaceExtendParams> = TypedContract::new();
@@ -103,6 +104,12 @@ pub static COMMANDS: &[CommandSpec] = &[
         .contract(&OFFSET_CONTRACT)
         .output(output_schema_for::<FeatureResult>)
         .params("faces: [[x,y,z]] (points on the faces); body?; distance: expr (signed, along the faces' normals; 0 copies the faces); chain?: bool (each pick's whole smooth chain of faces); tolerance?: expr (how far a fitted face may stray, default 0.01 mm). Planes and cylinders move exactly; other faces are fitted. A new surface body (a solid where its faces close)"),
+    CommandSpec::new("surface.flatten", "Flatten Surface", crate::checked!("surface.flatten", flatten))
+        .at("SURFACE", "CREATE")
+        .icon("surface_flatten")
+        .contract(&FLATTEN_CONTRACT)
+        .output(output_schema_for::<FeatureResult>)
+        .params("faces: [[x,y,z]] (points on the faces; faces that share an edge stay joined); body?; tolerance?: expr (the mesh tolerance, default from the faces' size). New flat surface bodies, one per connected patch, side by side beyond the body's +X side: planes, cylinders and cones at their true size, other faces with the least stretch, reported as a warning"),
     CommandSpec::new("surface.ruled", "Ruled Surface", crate::checked!("surface.ruled", ruled))
         .at("SURFACE", "CREATE")
         .icon("surface_ruled")
@@ -538,6 +545,21 @@ fn offset(s: &mut Session, p: &Value) -> Result<Value> {
         chain: bool_(p, "chain").unwrap_or(false),
         tolerance,
     };
+    add_feature(s, p, kind)
+}
+
+fn flatten(s: &mut Session, p: &Value) -> Result<Value> {
+    let cmd = "surface.flatten";
+    let faces: Vec<solidcore_record::Vec3> =
+        p.get("faces").and_then(Value::as_array).map(|a| a.iter().filter_map(vec3).collect()).unwrap_or_default();
+    if faces.is_empty() || faces.len() > 10_000 {
+        return Err(bad(cmd, "`faces` must list points on the faces to flatten"));
+    }
+    let tolerance = expr(p, "tolerance");
+    if let Some(t) = &tolerance {
+        check_expr(s, t, Kind::Length, cmd, "tolerance")?;
+    }
+    let kind = FeatureKind::SurfaceFlatten { faces: faces.into_iter().map(FacePick).collect(), body: str_(p, "body").map(BodyName::from), tolerance };
     add_feature(s, p, kind)
 }
 
@@ -1350,6 +1372,41 @@ mod tests {
     /// Offset Surface: a cylinder's side (one face, closed along its seam) picked with its chain
     /// moved out to radius 12; a box top moved up exactly; a zero distance copies; past the axis
     /// refused, the design left as it was; undo, redo and reopening.
+    #[test]
+    fn flatten_lays_a_box_top_and_side_and_a_can_label_flat() {
+        let mut s = Session::default();
+        run(&mut s, "solid.box", json!({"length": 10, "width": 10, "height": 10, "body_name": "Box"}));
+        let r = run(&mut s, "surface.flatten", json!({"faces": [[5, 5, 10], [5, 0, 5]], "body_name": "Net"}));
+        assert!(r.get("warning").is_none_or(Value::is_null), "{r}");
+        let st = s.world_state().unwrap();
+        let net = &st.body("Net").unwrap().body;
+        assert!(net.is_surface() && net.face_count() == 1);
+        assert!((area(&s, "Net") - 200.0).abs() < 1e-6);
+        let bb = solidcraft_kernel::measure(net).unwrap().bbox;
+        assert!(bb.min.x > 10.0 && (bb.max.z - bb.min.z).abs() < 1e-9, "beside the box, flat: {bb:?}");
+        // The label of a can: its side unrolls to 2π·10 by 20.
+        run(&mut s, "solid.cylinder", json!({"radius": 10, "height": 20, "base": [0, 40, 0], "body_name": "Can"}));
+        run(&mut s, "surface.flatten", json!({"faces": [[10, 40, 10]], "body": "Can", "body_name": "Label"}));
+        let want = 2.0 * std::f64::consts::PI * 10.0 * 20.0;
+        assert!((area(&s, "Label") - want).abs() < want * 2e-3, "{} vs {want}", area(&s, "Label"));
+        // Undo removes it; the design reopens with it.
+        run(&mut s, "edit.undo", json!({}));
+        assert!(s.world_state().unwrap().body("Label").is_none());
+        run(&mut s, "edit.redo", json!({}));
+        let cold = Session::new(solidcraft_doc::Document::from_json(&s.doc.to_json()).unwrap());
+        assert!(cold.world_state().unwrap().body("Label").is_some());
+        // A dome is stretched, and says so.
+        run(&mut s, "solid.sphere", json!({"radius": 20, "center": [0, 100, 0], "operation": "new", "body_name": "Ball"}));
+        let r = run(&mut s, "surface.flatten", json!({"faces": [[0, 100, 20]], "body": "Ball"}));
+        let warning = r.get("warning").and_then(Value::as_str).unwrap_or_default();
+        assert!(warning.contains("stretched"), "{r}");
+        // Nothing to flatten is refused, leaving the design as it was.
+        let before = s.doc.to_json();
+        assert!(s.execute("surface.flatten", &json!({"faces": []})).is_err());
+        assert!(s.execute("surface.flatten", &json!({"faces": [[500, 500, 500]]})).is_err());
+        assert_eq!(s.doc.to_json(), before);
+    }
+
     #[test]
     fn offset_surface_of_a_cylinder_and_a_box_top() {
         let mut s = Session::default();

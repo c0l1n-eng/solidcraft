@@ -18,6 +18,7 @@ surface_extend = { master = "extend", accent = "surface" }
 surface_trim = { master = "trim", accent = "surface" }
 surface_untrim = { master = "untrim", accent = "surface" }
 surface_offset = { master = "offset_surface", accent = "surface" }
+surface_flatten = { master = "unfold", accent = "surface" }
 surface_ruled = { master = "ruled", accent = "surface" }
 surface_boundary = { master = "boundary", accent = "surface" }
 surface_blend = { master = "blend_surface", accent = "surface" }

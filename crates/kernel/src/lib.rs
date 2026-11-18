@@ -136,6 +136,7 @@ mod step;
 mod step_in;
 mod step_out;
 mod surface_extend;
+mod surface_flatten;
 mod surface_kind;
 mod surface_offset;
 mod surface_ruled;
@@ -241,6 +242,7 @@ pub use step_in::{
 pub use step_in::{MAX_ASSEMBLY_DEPTH as IMPORT_MAX_DEPTH, MAX_BODIES as IMPORT_MAX_BODIES, MAX_VISITS as IMPORT_MAX_VISITS};
 pub use step_out::{ExportBody, ExportProduct, StepExport, StepHeader, step_export_bodies, step_export_bodies_with_face_ids, step_export_products};
 pub use surface_extend::{ExtendLimit, ExtendMode, ExtendOptions, extend_surface};
+pub use surface_flatten::{FlatInfo, flatten_surface};
 pub use surface_kind::{AxialPiece, EdgeCircle, FaceSurface, axial_face_section, edge_circle, face_edge_indices, face_surface};
 pub use surface_offset::offset_surface;
 pub use surface_ruled::{Ruled, RuledCorners, RuledMode, ruled_far_handles, ruled_surface, ruled_surface_with};

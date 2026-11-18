@@ -1,0 +1,38 @@
+{
+  "en": {
+    "cmd.surface_flatten": "Flatten Surface",
+    "help.surface.flatten": "Lays faces flat as new flat surface bodies beside the part, keeping faces that share an edge joined; planes, cylinders and cones come out at their true size, and other faces with the least stretch, which it reports. Use it for labels, decals and wraps.",
+    "FLATTEN SURFACE": "FLATTEN SURFACE",
+    "ui.flatten_tolerance_hint": "from the faces' size"
+  },
+  "ar": {
+    "cmd.surface_flatten": "تسطيح سطح",
+    "help.surface.flatten": "يبسط الأوجه كأجسام سطحية مستوية جديدة بجانب القطعة، ويُبقي الأوجه التي تشترك في حافة متصلة؛ تخرج المستويات والأسطوانات والمخاريط بحجمها الحقيقي، والأوجه الأخرى بأقل تمدد، ويُبلغ عنه. استخدمه للملصقات والشارات والأغلفة.",
+    "FLATTEN SURFACE": "تسطيح سطح",
+    "ui.flatten_tolerance_hint": "من حجم الأوجه"
+  },
+  "he": {
+    "cmd.surface_flatten": "שיטוח משטח",
+    "help.surface.flatten": "פורש פאות לשטוח כגופי משטח שטוחים חדשים לצד החלק, ושומר מחוברות פאות שחולקות קצה; מישורים, גלילים וחרוטים יוצאים בגודלם האמיתי, ופאות אחרות במתיחה המזערית, שעליה הוא מדווח. מתאים לתוויות, למדבקות ולעטיפות.",
+    "FLATTEN SURFACE": "שיטוח משטח",
+    "ui.flatten_tolerance_hint": "לפי גודל הפאות"
+  },
+  "ja": {
+    "cmd.surface_flatten": "サーフェスを平面展開",
+    "help.surface.flatten": "面を平らに展開し、新しい平面のサーフェスボディとして部品の横に置きます。エッジを共有する面はつながったまま展開されます。平面・円柱・円錐は実寸で、それ以外の面は伸びが最小になるように展開し、その伸びを報告します。ラベル、デカール、ラッピングに使います。",
+    "FLATTEN SURFACE": "サーフェスを平面展開",
+    "ui.flatten_tolerance_hint": "面のサイズから"
+  },
+  "vi": {
+    "cmd.surface_flatten": "Trải phẳng mặt (Flatten Surface)",
+    "help.surface.flatten": "Trải phẳng các mặt thành những thân mặt phẳng mới bên cạnh chi tiết, giữ liền các mặt có chung cạnh; mặt phẳng, mặt trụ và mặt nón ra đúng kích thước thật, các mặt khác với độ giãn nhỏ nhất và có báo độ giãn. Dùng cho nhãn, đề can và lớp bọc.",
+    "FLATTEN SURFACE": "TRẢI PHẲNG MẶT",
+    "ui.flatten_tolerance_hint": "theo kích thước các mặt"
+  },
+  "zh": {
+    "cmd.surface_flatten": "展平曲面",
+    "help.surface.flatten": "将面展平为新的平面曲面实体，放在零件旁边，共享边的面保持相连；平面、圆柱面和圆锥面按真实尺寸展开，其他面以最小拉伸展开并报告拉伸量。用于标签、贴花和包覆。",
+    "FLATTEN SURFACE": "展平曲面",
+    "ui.flatten_tolerance_hint": "按面的尺寸"
+  }
+}

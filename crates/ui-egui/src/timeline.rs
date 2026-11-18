@@ -241,6 +241,7 @@ pub(crate) fn icon_of(k: &FeatureKind) -> &'static str {
         FeatureKind::SurfaceSweep { .. } => "surface_sweep",
         FeatureKind::SurfaceLoft { .. } => "surface_loft",
         FeatureKind::SurfaceOffset { .. } => "surface_offset",
+        FeatureKind::SurfaceFlatten { .. } => "surface_flatten",
         FeatureKind::SurfaceRuled { .. } => "surface_ruled",
         FeatureKind::SurfaceUntrim { .. } => "surface_untrim",
         FeatureKind::SurfaceBlend { .. } => "surface_blend",

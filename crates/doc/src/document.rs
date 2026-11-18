@@ -2069,6 +2069,18 @@ pub enum FeatureKind {
         #[walk(length = "Tolerance")]
         tolerance: Option<Expr>,
     },
+    /// The faces at `faces` laid flat as new planar surface bodies, one per connected patch, side
+    /// by side beyond the body's +X side: faces that unroll (planes, cylinders, cones) at their
+    /// true size, others with the least stretch; meshed to `tolerance` (default: from the body's
+    /// size).
+    SurfaceFlatten {
+        faces: Vec<FacePick>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        body: Option<BodyName>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[walk(length = "Tolerance")]
+        tolerance: Option<Expr>,
+    },
     /// A strip of ruled surface `distance` wide hanging off the chain of `body`'s edges through
     /// `edges`, as a new surface body: along `mode` (`angle` from `direction`, or from the
     /// face's normal; along `direction`), from the face at `face` where it borders the chain;
@@ -3038,6 +3050,7 @@ impl FeatureKind {
             FeatureKind::OffsetFace { .. } => "OffsetFacesFeature",
             FeatureKind::DeleteFace { .. } => "DeleteFaceFeature",
             FeatureKind::SurfaceOffset { .. } => "OffsetSurfaceFeature",
+            FeatureKind::SurfaceFlatten { .. } => "FlattenSurfaceFeature",
             FeatureKind::BoundingSolid { .. } => "BoundingSolidFeature",
             FeatureKind::Pipe { .. } => "PipeFeature",
             FeatureKind::FrameEndCap { .. } => "EndCapFeature",
@@ -3158,6 +3171,7 @@ impl FeatureKind {
             FeatureKind::SurfaceSweep { .. } => "surface_sweep",
             FeatureKind::SurfaceLoft { .. } => "surface_loft",
             FeatureKind::SurfaceOffset { .. } => "surface_offset",
+            FeatureKind::SurfaceFlatten { .. } => "surface_flatten",
             FeatureKind::SurfaceRuled { .. } => "surface_ruled",
             FeatureKind::SurfaceExtend { .. } => "surface_extend",
             FeatureKind::SurfaceBlend { .. } => "surface_blend",
@@ -3293,6 +3307,7 @@ impl FeatureKind {
             FeatureKind::OffsetFace { .. } => "OffsetFace",
             FeatureKind::DeleteFace { .. } => "DeleteFace",
             FeatureKind::SurfaceOffset { .. } => "OffsetSurface",
+            FeatureKind::SurfaceFlatten { .. } => "FlattenSurface",
             FeatureKind::BoundingSolid { .. } => "BoundingSolid",
             FeatureKind::Pipe { .. } => "Pipe",
             FeatureKind::FrameEndCap { .. } => "EndCap",

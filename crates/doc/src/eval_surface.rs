@@ -526,6 +526,41 @@ pub(super) fn eval(doc: &Document, vals: &BTreeMap<String, Value>, f: &Feature, 
             st.bodies.push(ModelBody::traced_new(name, made, f.id));
             Ok(())
         }
+        FeatureKind::SurfaceFlatten { faces, body, tolerance } => {
+            let tol = match tolerance {
+                Some(t) => val(vals, t, Kind::Length)?,
+                None => 0.0,
+            };
+            let i = body_at(st, body, &crate::plain(faces))?;
+            let Some(mb) = st.bodies.get(i).cloned() else { return Err(DocError::Invalid("body".into())) };
+            let mut picked: Vec<usize> = Vec::new();
+            for p in &crate::plain(faces) {
+                let fi = crate::appearance::face_index_at(&mb, *p)
+                    .ok_or_else(|| DocError::Invalid(format!("Flatten: no face of {} at {p:?}", mb.name)))?;
+                if !picked.contains(&fi) {
+                    picked.push(fi);
+                }
+            }
+            let pieces = kernel::flatten_surface(&mb.body, &picked, tol)?;
+            for (k, (flat, info)) in pieces.into_iter().enumerate() {
+                if info.folded > 0 {
+                    append_warning(warning, format!("Flatten: piece {} overlaps itself; flatten fewer faces at a time.", k + 1));
+                } else if info.max_stretch > 0.01 {
+                    append_warning(
+                        warning,
+                        format!(
+                            "Flatten: piece {} is stretched up to {:.1} % (mean {:.2} %): these faces cannot lie flat exactly.",
+                            k + 1,
+                            info.max_stretch * 100.0,
+                            info.mean_stretch * 100.0
+                        ),
+                    );
+                }
+                let name = new_name(st, f, k);
+                st.bodies.push(ModelBody::new(name, flat, f.id));
+            }
+            Ok(())
+        }
         FeatureKind::SurfaceRuled { body, edges, distance, mode, angle, direction, flip, corners, face, far } => {
             let d = val(vals, distance, Kind::Length)?;
             let mode = match mode {

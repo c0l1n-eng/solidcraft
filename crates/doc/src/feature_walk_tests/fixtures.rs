@@ -205,6 +205,7 @@ pub(super) fn fixtures() -> Vec<(&'static str, Value)> {
             json!({"type": "surface_blend", "from": {"body": "B", "edges": [o]}, "to": {"body": "C", "edges": [o]}, "align": [o, o], "seam": [o, o]}),
         ),
         ("surface_offset", json!({"type": "surface_offset", "faces": [o], "distance": "soff.distance", "tolerance": "soff.tolerance"})),
+        ("surface_flatten", json!({"type": "surface_flatten", "faces": [o], "body": "B", "tolerance": "sflat.tolerance"})),
         // The Class-A surface family (surface.blend/boundary/match/fair).
         (
             "surface_blend",

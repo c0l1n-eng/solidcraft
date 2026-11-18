@@ -29,6 +29,10 @@ crate::dialog_descriptor::dialog_descriptors! {
             distance: String = "2 mm".into() => distance.to_string(),
             chain: bool = false => *chain,
         } => json!({"distance": distance});
+        Flatten("surface.flatten", "FLATTEN SURFACE", [("Faces", FACES, true)],
+            FeatureKind::SurfaceFlatten { tolerance, .. }) {
+            tolerance: String = String::new() => tolerance.as_ref().map(ToString::to_string).unwrap_or_default(),
+        } => json!({});
         Stitch("surface.stitch", "STITCH", [("Surfaces", BODIES, true)],
             FeatureKind::Stitch { tolerance, .. }) {
             tolerance: String = String::new() => if tolerance.trim() == "0" { String::new() } else { tolerance.to_string() },
@@ -303,6 +307,9 @@ pub fn rows(ui: &mut egui::Ui, k: &mut Surf) -> bool {
         }
         Surf::Stitch { tolerance } => {
             enter |= hint_row(ui, "Tolerance", tolerance, solidcraft_ui_text::tr("ui.stitch_tolerance_hint"));
+        }
+        Surf::Flatten { tolerance } => {
+            enter |= hint_row(ui, "Tolerance", tolerance, solidcraft_ui_text::tr("ui.flatten_tolerance_hint"));
         }
         Surf::Thicken { thickness, symmetric, operation } => {
             enter |= expr_row(ui, "Thickness", thickness);
@@ -812,6 +819,16 @@ pub fn commands(app: &SolveApp, k: &Surf, inputs: &[SelInput], extra: &Map<Strin
             let cmd = if matches!(k, Surf::Unstitch) { "surface.unstitch" } else { "surface.reverse_normal" };
             (cmd, json!({"body": body, "faces": faces}))
         }
+        Surf::Flatten { tolerance } => {
+            need(0, "the faces to flatten")?;
+            let (body, faces) = body_and_faces(items(inputs, 0))?;
+            if faces.is_empty() {
+                return Err("pick faces to flatten".into());
+            }
+            let mut p = json!({"body": body, "faces": faces});
+            put(&mut p, &[("tolerance", tolerance)]);
+            ("surface.flatten", p)
+        }
         Surf::Stitch { tolerance } => {
             need(0, "the surfaces to stitch")?;
             let mut p = json!({ "bodies": items(inputs, 0).body_names() });
@@ -1131,7 +1148,7 @@ pub fn for_feature(app: &SolveApp, kind: &FeatureKind, frame: &Mat) -> Option<(K
             }
             return Some((Kind::Surface(k), ins, extra));
         }
-        FeatureKind::SurfaceOffset { faces, .. } => {
+        FeatureKind::SurfaceOffset { faces, .. } | FeatureKind::SurfaceFlatten { faces, .. } => {
             (Surf::simple_restore(kind)?, vec![faces.iter().filter_map(|p| crate::dialogs::face_sel(s, p.0)).collect()])
         }
         FeatureKind::SurfaceRuled { edges, distance, mode, angle, direction, flip, corners, face, .. } => {

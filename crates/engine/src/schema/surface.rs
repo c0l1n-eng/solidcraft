@@ -244,6 +244,61 @@ pub struct OffsetParams {
     pub common: FeatureCommon,
 }
 
+/// Points on the faces to flatten, 1 to 10 000, with the handler's message for anything else.
+#[derive(Clone, Debug, PartialEq)]
+pub struct FlattenFaces(pub Vec<Value>);
+
+/// The handler's message for `faces` it can't use.
+const FLATTEN_FACES_MESSAGE: &str = "`faces` must list points on the faces to flatten";
+
+impl<'de> Deserialize<'de> for FlattenFaces {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        match Value::deserialize(d)? {
+            Value::Array(points) if (1..=MAX_PICKS).contains(&points.len()) && points.iter().all(|p| params::vec3(p).is_some()) => {
+                Ok(FlattenFaces(points))
+            }
+            _ => Err(D::Error::custom(whole(FLATTEN_FACES_MESSAGE))),
+        }
+    }
+}
+
+impl JsonSchema for FlattenFaces {
+    fn schema_name() -> Cow<'static, str> {
+        "FlattenFaces".into()
+    }
+    fn inline_schema() -> bool {
+        true
+    }
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
+        json_schema!({
+            "description": "Points on the faces to flatten: 1 to 10 000. Faces that share an edge stay joined.",
+            "type": "array",
+            "items": point_schema(generator),
+            "minItems": 1,
+            "maxItems": MAX_PICKS
+        })
+    }
+}
+
+/// Lay faces flat as new planar surface bodies beside the body, one per connected patch: planes,
+/// cylinders and cones at their true size, other faces with the least stretch (reported as a
+/// warning). For labels, decals and wraps. One undo step.
+#[derive(Debug, Deserialize, JsonSchema)]
+#[schemars(deny_unknown_fields, transform = faces_required)]
+pub struct FlattenParams {
+    #[serde(default, deserialize_with = "present")]
+    #[schemars(with = "FlattenFaces")]
+    pub faces: Option<FlattenFaces>,
+    /// The body the faces are on, by name. Default: the body at the points.
+    #[serde(default)]
+    pub body: Option<String>,
+    /// The mesh tolerance the faces are flattened to. Default: from the faces' size.
+    #[serde(default)]
+    pub tolerance: Option<LengthExpr>,
+    #[serde(flatten, deserialize_with = "feature_common")]
+    pub common: FeatureCommon,
+}
+
 /// Untrim's `face`: `{body, point}`, a point on a face of a body, read as the handler reads it,
 /// with its messages. Other keys in it are read past.
 #[derive(Clone, Debug, PartialEq)]

@@ -917,6 +917,7 @@ form_case!(surface_reverse, "surface.reverse_normal", []);
 form_case!(surface_offset, "surface.offset", ["Distance"]);
 form_case!(surface_ruled, "surface.ruled", ["Distance", "Type", "Corners"]);
 form_case!(surface_stitch, "surface.stitch", ["Tolerance"]);
+form_case!(surface_flatten, "surface.flatten", ["Tolerance"]);
 form_case!(surface_fair, "surface.fair", ["ui.fair_strength", "ui.fair_iterations", "Tolerance"]);
 form_case!(surface_match, "surface.match", ["Continuity"]);
 form_case!(thicken, "surface.thicken", ["Thickness", "Direction", "Operation"]);
