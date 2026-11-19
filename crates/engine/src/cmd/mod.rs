@@ -58,6 +58,7 @@ mod drawing_ui;
 mod drawing_view;
 mod edit;
 mod face;
+mod face_dxf;
 mod features;
 mod features_more;
 mod join_pieces;
@@ -515,6 +516,7 @@ pub fn command_specs() -> Vec<&'static CommandSpec> {
     v.extend(file_library::COMMANDS.iter());
     v.extend(board_import::COMMANDS.iter());
     v.extend(print_face::COMMANDS.iter());
+    v.extend(face_dxf::COMMANDS.iter());
     v.extend(metadata::COMMANDS.iter());
     v.extend(inspect::COMMANDS.iter());
     v.extend(compare::COMMANDS.iter());

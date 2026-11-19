@@ -33,6 +33,10 @@ pub struct FlatInfo {
     pub max_stretch: f64,
     /// Triangles that came out turned over: the piece overlaps itself.
     pub folded: usize,
+    /// The piece's outer boundary, counter-clockwise, its smallest corner at (0, 0) (mm).
+    pub outer: Vec<[f64; 2]>,
+    /// Its holes, clockwise, in the same coordinates.
+    pub holes: Vec<Vec<[f64; 2]>>,
 }
 
 /// The picked faces of `body` (indices in its face order) laid flat: one planar surface body per
@@ -89,6 +93,8 @@ pub fn flatten_surface(body: &Body, faces: &[usize], tolerance: f64) -> Result<V
             mean_stretch: p.mean_stretch,
             max_stretch: p.max_stretch,
             folded: p.folded,
+            outer: p.outer,
+            holes: p.holes,
         };
         out.push((flat, info));
     }

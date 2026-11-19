@@ -1,0 +1,20 @@
+{
+  "en": {
+    "cmd.face_export_dxf": "Export Face as DXF"
+  },
+  "ar": {
+    "cmd.face_export_dxf": "تصدير الوجه بتنسيق DXF"
+  },
+  "he": {
+    "cmd.face_export_dxf": "ייצוא פאה כ-DXF"
+  },
+  "ja": {
+    "cmd.face_export_dxf": "面を DXF に書き出し"
+  },
+  "vi": {
+    "cmd.face_export_dxf": "Xuất mặt ra DXF"
+  },
+  "zh": {
+    "cmd.face_export_dxf": "将面导出为 DXF"
+  }
+}

@@ -733,6 +733,7 @@ fn viewport_items(app: &SolveApp) -> Vec<Item> {
         v.push(act("ui.appearance", "Appearance", "appearance").key("A"));
         v.push(act("ui.properties", "Properties", "measure").with(json!({ "bodies": [face] })));
         v.push(act("ui.saveMesh", "Save As Mesh", "export").with(json!({ "bodies": [face] })));
+        v.push(act("ui.exportFaceDxf", "Export Face as DXF", "dxf").with(json!({ "body": face })));
         v.push(Item::sep());
         v.push(act("ui.delete", "Delete", "delete").key("Del"));
         v.push(act(if hidden { "ui.show" } else { "ui.hide" }, "Show/Hide", "eye").key("V").with(json!({ "bodies": [face] })));
@@ -2106,6 +2107,22 @@ pub fn run_item(app: &mut SolveApp, item: &Item, at: Pos2) {
             let items: Vec<Value> = bodies.iter().map(|b| json!({"type": "body", "name": b})).collect();
             let _ = app.run("select.set", json!({ "items": items }));
             app.start(if item.id == "ui.saveMesh" { "file.save_mesh" } else { "file.send_to_slicer" });
+        }
+        "ui.exportFaceDxf" => {
+            // The selected faces of the body the menu is for, by points on them.
+            let body = p.get("body").and_then(Value::as_str).unwrap_or_default().to_string();
+            let faces: Vec<Value> = app
+                .session
+                .selection
+                .iter()
+                .filter_map(|s| match s {
+                    Sel::Face { body: b, point, .. } if *b == body => Some(json!([point.x, point.y, point.z])),
+                    _ => None,
+                })
+                .collect();
+            if !faces.is_empty() {
+                app.pick_save_command(&format!("{body} face.dxf"), &["dxf"], "face.export_dxf", json!({"body": body, "faces": faces}));
+            }
         }
         "ui.exportDxf" => {
             if let Some(id) = id_of(&p, "sketch") {
