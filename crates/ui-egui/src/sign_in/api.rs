@@ -243,7 +243,7 @@ mod tests {
     /// RFC 7636's own example: its verifier's S256 challenge.
     #[test]
     fn the_challenge_is_rfc_7636s() {
-        assert_eq!(challenge("dBjftJeZ4CVP-1mB0bwWhBvAZcVwqtdKJFXg8nNnOGU"), "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM");
+        assert_eq!(challenge("dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"), "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM");
         let v = verifier([7; 32]);
         assert_eq!(v.len(), 43);
         assert!(v.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_'));
