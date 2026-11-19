@@ -1,7 +1,6 @@
 //! Export Face as DXF: the outline of picked faces as a cutting file (`face.export_dxf`).
 
 use serde_json::Value;
-use solidcraft_geom::prelude::*;
 
 use super::CommandSpec;
 use crate::params::{bad, num, str_};
