@@ -102,7 +102,12 @@ mod tests {
         assert_eq!(r["pieces"].as_array().map(Vec::len), Some(1), "{r}");
         let before = s.doc.to_json();
         let undo = s.undo.len();
-        for bad in [json!({"faces": []}), json!({"faces": [[500, 500, 500]]}), json!({"faces": [[2, 2, 5]], "body": "Nope"}), json!({"faces": [[2, 2, 5]], "tolerance": -1})] {
+        for bad in [
+            json!({"faces": []}),
+            json!({"faces": [[500, 500, 500]]}),
+            json!({"faces": [[2, 2, 5]], "body": "Nope"}),
+            json!({"faces": [[2, 2, 5]], "tolerance": -1}),
+        ] {
             assert!(s.execute("face.export_dxf", &bad).is_err(), "{bad}");
         }
         assert_eq!((s.doc.to_json(), s.undo.len()), (before, undo));

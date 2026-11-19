@@ -27,7 +27,9 @@ fn export(s: &mut Session, p: &Value) -> Result<Value> {
     }
     let tolerance = match p.get("tolerance").filter(|v| !v.is_null()) {
         None => 0.0,
-        Some(_) => num(p, "tolerance").filter(|t| t.is_finite() && (0.0..=10.0).contains(t)).ok_or_else(|| bad(cmd, "`tolerance` must be 0 to 10 mm"))?,
+        Some(_) => {
+            num(p, "tolerance").filter(|t| t.is_finite() && (0.0..=10.0).contains(t)).ok_or_else(|| bad(cmd, "`tolerance` must be 0 to 10 mm"))?
+        }
     };
     let path = match p.get("path").filter(|v| !v.is_null()) {
         None => None,
