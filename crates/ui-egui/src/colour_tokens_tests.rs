@@ -170,8 +170,8 @@ const ALLOWED_LITERALS: &[(&str, usize, &str)] = &[
     ("titlebar.rs", 2, "the window close button's red hover (the system's convention) and white ink"),
     (
         "app_bar.rs",
-        5,
-        "the link pills' brand fills (Ko-fi coral, Discord blurple: the services' own colours, the same in every theme), their white ink and the hover veil on the x",
+        15,
+        "the link pills' brand fills (Ko-fi coral, Discord blurple: the services' own colours, the same in every theme), their white ink and the hover veil on the x; Microsoft's sign-in button as its branding guidelines fix it (the logo's four squares, the light and dark fill, border and text)",
     ),
     ("workspace.rs", 1, "the view kinds' icon strokes, drawn on the Tabs board: a fixed palette per kind in each theme"),
     ("links.rs", 1, "the link pills' white ink on the brand fills"),

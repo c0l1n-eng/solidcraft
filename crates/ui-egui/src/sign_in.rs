@@ -375,7 +375,7 @@ fn microsoft_button(ui: &mut egui::Ui, label: &str) -> egui::Response {
     let galley = ui.painter().layout_no_wrap(label.to_string(), font, ink);
     let width = (12.0 + 21.0 + 12.0 + galley.size().x + 12.0).max(260.0);
     let (rect, response) = ui.allocate_exact_size(egui::vec2(width, 41.0), egui::Sense::click());
-    response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, label));
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, label));
     let fill = if response.is_pointer_button_down_on() {
         fill.gamma_multiply(0.92)
     } else if response.hovered() {
@@ -430,7 +430,7 @@ pub fn avatar(app: &mut SolveApp, ui: &mut egui::Ui, span: egui::Rect) -> Option
         return None;
     }
     let response = ui.interact(rect, ui.scope_id().with("sign_in_avatar"), egui::Sense::click());
-    response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &user.name));
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &user.name));
     crate::scenario::publish_target("titlebar:account", rect);
     if response.hovered() || app.sign_in.card_open {
         ui.painter().circle_filled(rect.center(), d / 2.0 + 2.0, t.accent_soft);
