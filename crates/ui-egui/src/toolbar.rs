@@ -194,6 +194,9 @@ pub(crate) fn search_in_header(app: &SolveApp) -> bool {
     app.header.search == SearchPlace::Header && !app.embedded && !app.embed_editor
 }
 
+/// The product's name in the title bar and on the sign-in page.
+pub const PRODUCT_NAME: &str = "Colin Craft";
+
 /// Where SolidCraft's application bar publishes its parts (scripts and scenarios use these names;
 /// `appbar:folder` and `tab:home` are kept for scripts written against the former folder button
 /// and Home tab).
@@ -250,7 +253,7 @@ pub fn app_bar(app: &mut SolveApp, ui: &mut egui::Ui) {
             // Narrow windows retain Save; Undo and Redo remain available from their shortcuts and menus.
             let bar = app_bar::AppBar {
                 mark: &|painter, at| solidcraft_look::glyphs::brand_mark(painter, at),
-                name: "Colin Craft",
+                name: PRODUCT_NAME,
                 leading: (crate::library::available(app) && !app.home.open).then_some(vec2(26.0, 26.0)),
                 home: app_bar::BarButton { id: "home", icon: "home", tip: app.tr("ui.start_page"), enabled: idle, narrow: false, wide_only: false },
                 file: app.tr("ui.file"),
@@ -335,11 +338,15 @@ pub fn app_bar(app: &mut SolveApp, ui: &mut egui::Ui) {
             }
             // A newer release: its Update button stays before the right cluster, and the
             // organization's Managed by badge left of it and of the link pills.
-            let update = crate::update::button(app, ui, out.offer, out.offer_labeled);
-            let badge_right = update.map_or(out.controls_left, |u| u.left().min(out.controls_left)) - 6.0;
+            // The signed-in person's badge first, nearest the right cluster; the offers left of it.
+            let account = crate::sign_in::avatar(app, ui, Rect::from_min_max(out.offer.min, pos2(out.controls_left - 6.0, out.offer.max.y)));
+            let controls_left = account.map_or(out.controls_left, |a| a.left() - 4.0);
+            let offer = Rect::from_min_max(out.offer.min, pos2(out.offer.max.x.min(controls_left).max(out.offer.min.x), out.offer.max.y));
+            let update = crate::update::button(app, ui, offer, out.offer_labeled);
+            let badge_right = update.map_or(controls_left, |u| u.left().min(controls_left)) - 6.0;
             let badge_span = Rect::from_min_max(out.offer.min, pos2(badge_right.max(out.offer.min.x), out.offer.max.y));
             let badge = crate::policy::badge(app, ui, badge_span, out.offer_labeled);
-            let tabs_end = badge.or(update).map_or(out.controls_left, |u| u.left()) - 8.0;
+            let tabs_end = badge.or(update).map_or(controls_left, |u| u.left()) - 8.0;
             // Narrow title bars can fit only part of the tab strip. Its hit regions must not
             // extend into the persistent report and window controls.
             let tabs_rect = Rect::from_min_max(pos2(out.tabs_start.min(tabs_end), r.top()), pos2(tabs_end, r.bottom()));

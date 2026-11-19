@@ -10,7 +10,8 @@
 //! the background, so the next start needs no browser. A computer that has signed in before
 //! starts offline on the account it last had; the first sign-in needs the network.
 //!
-//! The account and Sign out are at the top of the Help menu.
+//! The person's initials sit at the right of the title bar; they open a profile card with
+//! their name, email, whether online, and Sign out.
 
 pub mod api;
 
@@ -97,6 +98,8 @@ pub struct SignIn {
     page: Option<String>,
     /// When a renewal may next be tried (Unix seconds).
     next_try: u64,
+    /// The profile card under the title bar's badge is open.
+    pub card_open: bool,
 }
 
 fn now() -> u64 {
@@ -261,61 +264,81 @@ impl SignIn {
     }
 }
 
-/// Each frame: the background work's answers, and the sign-in window while the app is held.
+/// Each frame: the background work's answers, the sign-in page while the app is held, and the
+/// profile card when open.
 pub fn show(app: &mut SolveApp, ctx: &egui::Context) {
     app.sign_in.poll(ctx);
-    if !app.sign_in.blocks() {
-        return;
+    if app.sign_in.blocks() {
+        app.sign_in.card_open = false;
+        page(app, ctx);
+    } else {
+        card(app, ctx);
     }
+}
+
+/// The product's name, as the title bar shows it.
+const PRODUCT: &str = crate::toolbar::PRODUCT_NAME;
+
+/// The sign-in page: over the whole window, the app's mark and name, and Microsoft's sign-in
+/// button as its branding guidelines draw it.
+fn page(app: &mut SolveApp, ctx: &egui::Context) {
     let t = solidcraft_theme::Tokens::get();
     let container = ui_kit::Container::new(ctx, ui_kit::Surface::Window);
-    let frame = container.frame(ctx, t.dialog_body, crate::frame::Side::Left);
+    let frame = container.frame(ctx, t.dialog_body, crate::frame::Side::Left).inner_margin(egui::Margin::same((t.space_16 * 2.0) as i8));
     let state = app.sign_in.state.clone();
     let mut act: Option<&str> = None;
     container.modal(egui::Id::unique("sc_sign_in")).backdrop_color(t.dialog_body).frame(frame).show(ctx, |ui| {
-        ui.set_width(360.0);
-        ui_kit::text(ui, solidcraft_ui_text::tr_label("Sign in"), ui_kit::Text::Heading("sign_in"));
-        match &state {
-            State::Checking => {
-                ui_kit::text(ui, solidcraft_ui_text::tr_label("Checking your sign-in…"), ui_kit::Text::Note("checking"));
-            }
-            State::Waiting => {
-                ui_kit::text(
-                    ui,
-                    solidcraft_ui_text::tr_label("Finish signing in with Microsoft in your browser, then come back here."),
-                    ui_kit::Text::Note("waiting"),
-                );
-                ui.horizontal(|ui| {
-                    if ui_kit::button(ui, solidcraft_ui_text::tr_label("Open the page again"), ui_kit::Button::Normal).clicked() {
-                        act = Some("reopen");
-                    }
-                    if ui_kit::button(ui, solidcraft_ui_text::tr_label("Cancel"), ui_kit::Button::Normal).clicked() {
-                        act = Some("cancel");
-                    }
-                });
-            }
-            State::SignedOut { error } => {
-                ui_kit::text(
-                    ui,
-                    solidcraft_ui_text::tr_label("Sign in with your Microsoft work account to use this app."),
-                    ui_kit::Text::Note("intro"),
-                );
-                if let Some(e) = error {
-                    ui_kit::text(ui, e, ui_kit::Text::Error("error"));
-                }
-                ui.horizontal(|ui| {
-                    let r = ui_kit::button(ui, solidcraft_ui_text::tr_label("Sign in with Microsoft"), ui_kit::Button::Primary);
+        ui.set_width(340.0);
+        ui.vertical_centered(|ui| {
+            // The app's mark and name.
+            let (mark, _) = ui.allocate_exact_size(egui::vec2(48.0, 48.0), egui::Sense::hover());
+            solidcraft_look::glyphs::brand_mark(ui.painter(), mark.center());
+            ui.add_space(t.space_8);
+            ui.label(egui::RichText::new(PRODUCT).font(ui_kit::type_face::semibold(t.font_heading)).color(t.text));
+            ui.add_space(t.space_16);
+            ui.label(egui::RichText::new(solidcraft_ui_text::tr_label("Sign in")).font(ui_kit::type_face::semibold(t.font_heading)).color(t.text));
+            ui.add_space(t.space_4);
+            let note = match &state {
+                State::Checking => solidcraft_ui_text::tr_label("Checking your sign-in…"),
+                State::Waiting => solidcraft_ui_text::tr_label("Finish signing in with Microsoft in your browser, then come back here."),
+                _ => solidcraft_ui_text::tr_label("Sign in with your Microsoft work account to use this app."),
+            };
+            ui.label(egui::RichText::new(note).size(t.font_body).color(t.text_dim));
+            ui.add_space(t.space_16);
+            match &state {
+                State::SignedOut { error } => {
+                    let r = microsoft_button(ui, solidcraft_ui_text::tr_label("Sign in with Microsoft"));
                     crate::scenario::publish_target("sign_in:microsoft", r.rect);
                     if r.clicked() {
                         act = Some("start");
                     }
-                    if ui_kit::button(ui, solidcraft_ui_text::tr_label("Quit"), ui_kit::Button::Normal).clicked() {
-                        act = Some("quit");
+                    if let Some(e) = error {
+                        ui.add_space(t.space_8);
+                        ui_kit::text(ui, e, ui_kit::Text::Error("error"));
                     }
-                });
+                }
+                State::Waiting => {
+                    ui.add(egui::Spinner::new());
+                    ui.add_space(t.space_8);
+                    ui.horizontal(|ui| {
+                        if ui_kit::button(ui, solidcraft_ui_text::tr_label("Open the page again"), ui_kit::Button::Normal).clicked() {
+                            act = Some("reopen");
+                        }
+                        if ui_kit::button(ui, solidcraft_ui_text::tr_label("Cancel"), ui_kit::Button::Normal).clicked() {
+                            act = Some("cancel");
+                        }
+                    });
+                }
+                State::Checking => {
+                    ui.add(egui::Spinner::new());
+                }
+                State::Off | State::SignedIn { .. } => {}
             }
-            State::Off | State::SignedIn { .. } => {}
-        }
+            ui.add_space(t.space_16);
+            if ui_kit::button(ui, solidcraft_ui_text::tr_label("Quit"), ui_kit::Button::Ghost).clicked() {
+                act = Some("quit");
+            }
+        });
     });
     match act {
         Some("start") => app.sign_in.start(ctx),
@@ -330,7 +353,181 @@ pub fn show(app: &mut SolveApp, ctx: &egui::Context) {
     }
 }
 
-/// The Help menu's account line: who is signed in, and whether offline.
+/// Microsoft's logo: four squares, `size` across.
+fn microsoft_logo(painter: &egui::Painter, at: egui::Pos2, size: f32) {
+    let gap = size / 21.0;
+    let side = (size - gap) / 2.0;
+    let [red, green, blue, yellow] = ui_kit::app_bar::brand::MICROSOFT_LOGO;
+    for (k, fill) in [red, green, blue, yellow].into_iter().enumerate() {
+        let (col, row) = ((k % 2) as f32, (k / 2) as f32);
+        let min = egui::pos2(at.x + col * (side + gap), at.y + row * (side + gap));
+        painter.rect_filled(egui::Rect::from_min_size(min, egui::vec2(side, side)), 0.0, fill);
+    }
+}
+
+/// "Sign in with Microsoft" as Microsoft's guidelines draw it: 41 high, the logo 21 across 12 in
+/// from the left, the label in the button's text colour; light or dark as the theme is.
+fn microsoft_button(ui: &mut egui::Ui, label: &str) -> egui::Response {
+    let t = solidcraft_theme::Tokens::get();
+    let [fill, border, ink] =
+        if solidcraft_theme::is_dark() { ui_kit::app_bar::brand::MICROSOFT_DARK } else { ui_kit::app_bar::brand::MICROSOFT_LIGHT };
+    let font = ui_kit::type_face::semibold(t.font_heading);
+    let galley = ui.painter().layout_no_wrap(label.to_string(), font, ink);
+    let width = (12.0 + 21.0 + 12.0 + galley.size().x + 12.0).max(260.0);
+    let (rect, response) = ui.allocate_exact_size(egui::vec2(width, 41.0), egui::Sense::click());
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, label));
+    let fill = if response.is_pointer_button_down_on() {
+        fill.gamma_multiply(0.92)
+    } else if response.hovered() {
+        fill.gamma_multiply(0.96)
+    } else {
+        fill
+    };
+    let painter = ui.painter();
+    painter.rect(rect, 0.0, fill, egui::Stroke::new(1.0, border), egui::StrokeKind::Inside);
+    let content = 21.0 + 12.0 + galley.size().x;
+    let left = rect.center().x - content / 2.0;
+    microsoft_logo(painter, egui::pos2(left, rect.center().y - 10.5), 21.0);
+    painter.galley(egui::pos2(left + 21.0 + 12.0, rect.center().y - galley.size().y / 2.0), galley, ink);
+    if response.has_focus() {
+        painter.rect_stroke(rect.expand(2.0), 2.0, egui::Stroke::new(2.0, t.accent), egui::StrokeKind::Outside);
+    }
+    response.on_hover_cursor(egui::CursorIcon::PointingHand)
+}
+
+/// A person's initials: the first letters of the first and last words of their name, or of the
+/// parts of their email's name (`ann.byrne@…` is AB).
+pub fn initials(user: &User) -> String {
+    let words: Vec<&str> = if !user.name.trim().is_empty() && !user.name.contains('@') {
+        user.name.split_whitespace().collect()
+    } else {
+        user.email.split('@').next().unwrap_or_default().split(['.', '_', '-']).filter(|w| !w.is_empty()).collect()
+    };
+    let first = |w: &str| w.chars().next().map(|c| c.to_uppercase().collect::<String>()).unwrap_or_default();
+    match words.as_slice() {
+        [] => "?".into(),
+        [one] => first(one),
+        [a, .., b] => format!("{}{}", first(a), first(b)),
+    }
+}
+
+/// A round badge of the person's initials, `diameter` across, centred at `at`.
+fn paint_avatar(painter: &egui::Painter, at: egui::Pos2, diameter: f32, user: &User, font_size: f32) {
+    let t = solidcraft_theme::Tokens::get();
+    painter.circle_filled(at, diameter / 2.0, t.accent);
+    painter.text(at, egui::Align2::CENTER_CENTER, initials(user), ui_kit::type_face::semibold(font_size), t.on_accent);
+}
+
+/// The signed-in person's badge at the right of the title bar's free room (`span`): opens the
+/// profile card. Returns where it is.
+pub fn avatar(app: &mut SolveApp, ui: &mut egui::Ui, span: egui::Rect) -> Option<egui::Rect> {
+    use crate::ui_kit::BackingTooltipExt as _;
+    let user = app.sign_in.user()?.clone();
+    let t = solidcraft_theme::Tokens::get();
+    let d = 26.0;
+    let rect = egui::Rect::from_center_size(egui::pos2(span.right() - d / 2.0 - 2.0, span.center().y), egui::vec2(d, d));
+    if rect.left() < span.left() {
+        return None;
+    }
+    let response = ui.interact(rect, ui.scope_id().with("sign_in_avatar"), egui::Sense::click());
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &user.name));
+    crate::scenario::publish_target("titlebar:account", rect);
+    if response.hovered() || app.sign_in.card_open {
+        ui.painter().circle_filled(rect.center(), d / 2.0 + 2.0, t.accent_soft);
+    }
+    paint_avatar(ui.painter(), rect.center(), d, &user, t.font_small);
+    if matches!(app.sign_in.state, State::SignedIn { offline: true, .. }) {
+        let dot = rect.right_bottom() - egui::vec2(4.0, 4.0);
+        ui.painter().circle(dot, 4.0, t.text_dim, egui::Stroke::new(1.5, t.dialog_body));
+    }
+    let tip = account_label(app).unwrap_or_default();
+    if response.backing_on_hover_text(tip).clicked() {
+        app.sign_in.card_open = !app.sign_in.card_open;
+    }
+    ui.ctx().data_mut(|d| d.insert_temp(egui::Id::unique("sc_account_anchor"), rect));
+    Some(rect)
+}
+
+/// The profile card under the badge: the person, how they signed in, whether online, Sign out.
+fn card(app: &mut SolveApp, ctx: &egui::Context) {
+    if !app.sign_in.card_open {
+        return;
+    }
+    let Some(user) = app.sign_in.user().cloned() else {
+        app.sign_in.card_open = false;
+        return;
+    };
+    let t = solidcraft_theme::Tokens::get();
+    let anchor = ctx.data(|d| d.get_temp::<egui::Rect>(egui::Id::unique("sc_account_anchor"))).unwrap_or(egui::Rect::NOTHING);
+    let width = 300.0;
+    let at = egui::pos2(anchor.right() - width, anchor.bottom() + 8.0);
+    let offline = matches!(app.sign_in.state, State::SignedIn { offline: true, .. });
+    let mut sign_out = false;
+    let resp = ui_kit::Container::new(ctx, ui_kit::Surface::Popup)
+        .area(egui::Id::unique("sc_account_card"))
+        .fixed_pos(at)
+        .constrain(true)
+        .order(egui::Order::Foreground)
+        .show(ctx, |ui| {
+            crate::ui_kit::menu::menu_frame(ui, |ui| {
+                ui.set_width(width - 16.0);
+                ui.add_space(t.space_8);
+                ui.horizontal(|ui| {
+                    ui.add_space(t.space_8);
+                    let (badge, _) = ui.allocate_exact_size(egui::vec2(48.0, 48.0), egui::Sense::hover());
+                    paint_avatar(ui.painter(), badge.center(), 48.0, &user, t.font_heading);
+                    ui.add_space(t.space_8);
+                    ui.vertical(|ui| {
+                        ui.label(egui::RichText::new(&user.name).font(ui_kit::type_face::semibold(t.font_heading)).color(t.text));
+                        if !user.email.is_empty() && user.email != user.name {
+                            ui.label(egui::RichText::new(&user.email).size(t.font_body).color(t.text_dim));
+                        }
+                    });
+                });
+                ui.add_space(t.space_8);
+                ui_kit::divider(ui, "account:details");
+                ui.horizontal(|ui| {
+                    ui.add_space(t.space_8);
+                    let (logo, _) = ui.allocate_exact_size(egui::vec2(14.0, 14.0), egui::Sense::hover());
+                    microsoft_logo(ui.painter(), logo.min, 14.0);
+                    ui.label(egui::RichText::new(solidcraft_ui_text::tr_label("Signed in with Microsoft")).size(t.font_body).color(t.text));
+                });
+                ui.horizontal(|ui| {
+                    ui.add_space(t.space_8);
+                    let (dot, _) = ui.allocate_exact_size(egui::vec2(14.0, 14.0), egui::Sense::hover());
+                    ui.painter().circle_filled(dot.center(), 4.0, if offline { t.text_dim } else { t.accent });
+                    let status = if offline {
+                        solidcraft_ui_text::tr_label("Offline: using your saved sign-in")
+                    } else {
+                        solidcraft_ui_text::tr_label("Online")
+                    };
+                    ui.label(egui::RichText::new(status).size(t.font_body).color(t.text_dim));
+                });
+                ui.add_space(t.space_8);
+                ui_kit::divider(ui, "account:actions");
+                ui.horizontal(|ui| {
+                    ui.add_space(t.space_8);
+                    let r = ui_kit::button(ui, solidcraft_ui_text::tr_label("Sign out"), ui_kit::Button::Normal);
+                    crate::scenario::publish_target("account:sign_out", r.rect);
+                    sign_out = r.clicked();
+                });
+                ui.add_space(t.space_8);
+            })
+        });
+    if sign_out {
+        app.sign_in.card_open = false;
+        app.sign_in.sign_out();
+        return;
+    }
+    let pressed_outside = ctx.input(|i| i.pointer.any_pressed())
+        && !resp.response.contains_pointer()
+        && !ctx.pointer_interact_pos().is_some_and(|p| anchor.contains(p));
+    if pressed_outside || ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+        app.sign_in.card_open = false;
+    }
+}
+
+/// Who is signed in, and whether offline: the badge's tooltip.
 pub fn account_label(app: &SolveApp) -> Option<String> {
     let user = app.sign_in.user()?;
     let offline = matches!(app.sign_in.state, State::SignedIn { offline: true, .. });
@@ -460,5 +657,17 @@ mod tests {
         s.start(&ctx);
         s.cancel();
         assert!(s.blocks() && s.state == State::SignedOut { error: None });
+    }
+
+    #[test]
+    fn initials_come_from_the_name_or_the_email() {
+        let u = |name: &str, email: &str| User { id: "u".into(), name: name.into(), email: email.into() };
+        assert_eq!(initials(&u("Colin Evans", "c@x.com")), "CE");
+        assert_eq!(initials(&u("Ann Marie Byrne", "")), "AB");
+        assert_eq!(initials(&u("Ann", "")), "A");
+        assert_eq!(initials(&u("", "ann.byrne@x.com")), "AB");
+        assert_eq!(initials(&u("", "ann@x.com")), "A");
+        assert_eq!(initials(&u("", "")), "?");
+        assert_eq!(initials(&u("élodie dupont", "")), "ÉD");
     }
 }

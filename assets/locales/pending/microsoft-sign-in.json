@@ -10,7 +10,10 @@
     "sign_in.unreachable": "Could not reach the sign-in server",
     "sign_in.offline": "offline",
     "sign_in.sign_out": "Sign out",
-    "sign_in.cancel": "Cancel"
+    "sign_in.cancel": "Cancel",
+    "sign_in.with_microsoft": "Signed in with Microsoft",
+    "sign_in.online": "Online",
+    "sign_in.offline_saved": "Offline: using your saved sign-in"
   },
   "ar": {
     "sign_in.title": "تسجيل الدخول",
@@ -23,7 +26,10 @@
     "sign_in.unreachable": "تعذّر الوصول إلى خادم تسجيل الدخول",
     "sign_in.offline": "غير متصل",
     "sign_in.sign_out": "تسجيل الخروج",
-    "sign_in.cancel": "إلغاء"
+    "sign_in.cancel": "إلغاء",
+    "sign_in.with_microsoft": "تم تسجيل الدخول باستخدام Microsoft",
+    "sign_in.online": "متصل",
+    "sign_in.offline_saved": "غير متصل: يُستخدم تسجيل الدخول المحفوظ"
   },
   "he": {
     "sign_in.title": "התחברות",
@@ -36,7 +42,10 @@
     "sign_in.unreachable": "לא ניתן להגיע לשרת ההתחברות",
     "sign_in.offline": "לא מקוון",
     "sign_in.sign_out": "התנתק",
-    "sign_in.cancel": "ביטול"
+    "sign_in.cancel": "ביטול",
+    "sign_in.with_microsoft": "מחובר באמצעות Microsoft",
+    "sign_in.online": "מקוון",
+    "sign_in.offline_saved": "לא מקוון: נעשה שימוש בהתחברות השמורה"
   },
   "ja": {
     "sign_in.title": "サインイン",
@@ -49,7 +58,10 @@
     "sign_in.unreachable": "サインイン サーバーに接続できませんでした",
     "sign_in.offline": "オフライン",
     "sign_in.sign_out": "サインアウト",
-    "sign_in.cancel": "キャンセル"
+    "sign_in.cancel": "キャンセル",
+    "sign_in.with_microsoft": "Microsoft でサインイン済み",
+    "sign_in.online": "オンライン",
+    "sign_in.offline_saved": "オフライン: 保存されたサインインを使用中"
   },
   "vi": {
     "sign_in.title": "Đăng nhập",
@@ -62,7 +74,10 @@
     "sign_in.unreachable": "Không thể kết nối máy chủ đăng nhập",
     "sign_in.offline": "ngoại tuyến",
     "sign_in.sign_out": "Đăng xuất",
-    "sign_in.cancel": "Hủy"
+    "sign_in.cancel": "Hủy",
+    "sign_in.with_microsoft": "Đã đăng nhập bằng Microsoft",
+    "sign_in.online": "Trực tuyến",
+    "sign_in.offline_saved": "Ngoại tuyến: đang dùng đăng nhập đã lưu"
   },
   "zh": {
     "sign_in.title": "登录",
@@ -75,6 +90,9 @@
     "sign_in.unreachable": "无法连接登录服务器",
     "sign_in.offline": "离线",
     "sign_in.sign_out": "退出登录",
-    "sign_in.cancel": "取消"
+    "sign_in.cancel": "取消",
+    "sign_in.with_microsoft": "已使用 Microsoft 登录",
+    "sign_in.online": "在线",
+    "sign_in.offline_saved": "离线：正在使用已保存的登录"
   }
 }

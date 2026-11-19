@@ -45,6 +45,17 @@ pub mod brand {
     use egui::Color32;
     pub const KOFI: Color32 = Color32::from_rgb(0xFF, 0x5E, 0x5B);
     pub const DISCORD: Color32 = Color32::from_rgb(0x58, 0x65, 0xF2);
+    /// Microsoft's sign-in button (its branding guidelines for "Sign in with Microsoft"): the
+    /// four squares of the logo, and the button's fill, border and text in a light and a dark
+    /// theme.
+    pub const MICROSOFT_LOGO: [Color32; 4] = [
+        Color32::from_rgb(0xF2, 0x50, 0x22),
+        Color32::from_rgb(0x7F, 0xBA, 0x00),
+        Color32::from_rgb(0x00, 0xA4, 0xEF),
+        Color32::from_rgb(0xFF, 0xB9, 0x00),
+    ];
+    pub const MICROSOFT_LIGHT: [Color32; 3] = [Color32::WHITE, Color32::from_rgb(0x8C, 0x8C, 0x8C), Color32::from_rgb(0x5E, 0x5E, 0x5E)];
+    pub const MICROSOFT_DARK: [Color32; 3] = [Color32::from_rgb(0x2F, 0x2F, 0x2F), Color32::from_rgb(0x2F, 0x2F, 0x2F), Color32::WHITE];
 }
 /// The pills' height, and the least width at which the bar gives the first pill its label.
 pub const PILL_HEIGHT: f32 = 24.0;
