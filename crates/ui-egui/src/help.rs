@@ -85,6 +85,7 @@ pub fn run(app: &mut SolveApp, ctx: &egui::Context, item: &str) {
             app.set_status(msg, error);
         }
         "messages" => app.messages.open = true,
+        "sign_out" => app.sign_in.sign_out(),
         id if crate::links::by_id(id).is_some() => {
             crate::links::run(ctx, id);
         }
@@ -153,6 +154,14 @@ pub fn show(app: &mut SolveApp, ctx: &egui::Context, anchor: egui::Pos2) {
             .order(egui::Order::Foreground)
             .show(ctx, |ui| {
                 crate::ui_kit::menu::menu_frame(ui, |ui| {
+                    // Who is signed in (Microsoft), and Sign out.
+                    if let Some(account) = crate::sign_in::account_label(app) {
+                        let _ = crate::ui_kit::menu::list_row(ui, &crate::ui_kit::Item::action("account", &account, "settings").on_if(false));
+                        if crate::ui_kit::menu::list_row(ui, &crate::ui_kit::Item::action("sign_out", "Sign out", "close")).is_some() {
+                            pick = Some("sign_out");
+                        }
+                        crate::ui_kit::Menu::separator(ui);
+                    }
                     for (id, label, icon) in [
                         ("docs", "Documentation", "library"),
                         ("about", "About SolidCraft", "help"),

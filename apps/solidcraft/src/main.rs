@@ -880,6 +880,7 @@ fn services(cc: &eframe::CreationContext<'_>, folder: &DialogFolder) -> Services
         secrets: Some(std::sync::Arc::new(Keychain("SolidCraft agent chat"))),
         tickets_http: Some(std::sync::Arc::new(tickets_http)),
         ticket_secrets: Some(std::sync::Arc::new(Keychain("SolidCraft tickets"))),
+        sign_in: sign_in_host(),
         show_in_folder: Some(Box::new(|path| {
             let folder = std::path::Path::new(path).parent().unwrap_or_else(|| std::path::Path::new("."));
             let mut command = std::process::Command::new(if cfg!(target_os = "windows") {
@@ -989,6 +990,92 @@ fn easyprint_upload(name: &str, bytes: Vec<u8>, done: std::sync::mpsc::Sender<Re
         };
         let _ = done.send(agent_http(&request).and_then(|(status, body)| easyprint::parse_import_response(status, &body)));
     });
+}
+
+/// The internal PDM service's Supabase project (`cad_app`): its address and publishable key,
+/// both public. `SOLIDCRAFT_SUPABASE_URL` and `SOLIDCRAFT_SUPABASE_KEY` point another build at
+/// another project.
+const SUPABASE_URL: &str = "https://wijuosxqpkqaogarkole.supabase.co";
+const SUPABASE_KEY: &str = "sb_publishable_CI18JEWTafBaw2ZWLUn_3A_jkAfFVqb";
+/// The port the browser comes back to after Microsoft sign-in:
+/// `http://127.0.0.1:47321/auth/callback` is among the project's redirect URLs.
+const SIGN_IN_PORT: u16 = 47321;
+
+/// Microsoft sign-in, required at start. `SOLIDCRAFT_SIGN_IN=off` leaves it out (development,
+/// automation); `=optional` asks for it only where it is needed.
+fn sign_in_host() -> Option<solidcraft_ui_egui::sign_in::Host> {
+    use solidcraft_ui_egui::sign_in::{Config, Host};
+    let mode = std::env::var("SOLIDCRAFT_SIGN_IN").unwrap_or_default().to_ascii_lowercase();
+    if mode == "off" {
+        return None;
+    }
+    let env = |k: &str, d: &str| std::env::var(k).ok().filter(|v| !v.trim().is_empty()).unwrap_or_else(|| d.to_string());
+    let port = std::env::var("SOLIDCRAFT_SIGN_IN_PORT").ok().and_then(|p| p.parse().ok()).unwrap_or(SIGN_IN_PORT);
+    Some(Host {
+        config: Config {
+            url: env("SOLIDCRAFT_SUPABASE_URL", SUPABASE_URL),
+            key: env("SOLIDCRAFT_SUPABASE_KEY", SUPABASE_KEY),
+            port,
+            required: mode != "optional",
+        },
+        // HTTPS only: the session's tokens never go in the clear.
+        http: std::sync::Arc::new(|r| if r.url.starts_with("https://") { agent_http(r) } else { Err("only HTTPS is allowed".into()) }),
+        secrets: std::sync::Arc::new(Keychain("SolidCraft sign-in")),
+        listen: std::sync::Arc::new(sign_in_listen),
+        random: std::sync::Arc::new(|| {
+            let mut bytes = [0u8; 32];
+            // The TLS library's system random source; a failure leaves the verifier unusable,
+            // which the server then refuses.
+            let _ = rustls::crypto::ring::default_provider().secure_random.fill(&mut bytes);
+            bytes
+        }),
+    })
+}
+
+/// Wait on 127.0.0.1:`port` for the browser's return from Microsoft sign-in: the target of the
+/// first request to `/auth/callback`, answered with a page saying to go back to the app. Other
+/// requests (a favicon) get a 404. Gives up after `wait`, or once `cancel` is set.
+fn sign_in_listen(port: u16, wait: std::time::Duration, cancel: std::sync::Arc<std::sync::atomic::AtomicBool>) -> Result<String, String> {
+    use std::io::{BufRead, BufReader, Read, Write};
+    use std::sync::atomic::Ordering;
+    let listener =
+        std::net::TcpListener::bind(("127.0.0.1", port)).map_err(|e| format!("could not listen on 127.0.0.1:{port} for the browser: {e}"))?;
+    listener.set_nonblocking(true).map_err(|e| e.to_string())?;
+    let until = std::time::Instant::now() + wait;
+    while std::time::Instant::now() < until {
+        if cancel.load(Ordering::Relaxed) {
+            return Err("cancelled".into());
+        }
+        let (stream, _) = match listener.accept() {
+            Ok(s) => s,
+            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                std::thread::sleep(std::time::Duration::from_millis(100));
+                continue;
+            }
+            Err(e) => return Err(e.to_string()),
+        };
+        let _ = stream.set_nonblocking(false);
+        let _ = stream.set_read_timeout(Some(std::time::Duration::from_secs(5)));
+        let mut reader = BufReader::new(stream);
+        let mut line = String::new();
+        if reader.by_ref().take(8192).read_line(&mut line).is_err() {
+            continue;
+        }
+        let target = line.split_whitespace().nth(1).unwrap_or_default().to_string();
+        let mut stream = reader.into_inner();
+        if !target.starts_with("/auth/callback") {
+            let _ = stream.write_all(b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+            continue;
+        }
+        let page = "<!doctype html><meta charset=utf-8><title>Signed in</title><body style=\"font-family:sans-serif;margin:3em\"><h2>You can close this tab</h2><p>Go back to the app to carry on.</p></body>";
+        let _ = write!(
+            stream,
+            "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{page}",
+            page.len()
+        );
+        return Ok(target);
+    }
+    Err("the browser didn't come back in time; try signing in again".into())
 }
 
 /// Secrets in the system keychain: API keys (service "SolidCraft agent chat", one entry per

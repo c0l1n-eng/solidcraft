@@ -1,0 +1,80 @@
+{
+  "en": {
+    "sign_in.title": "Sign in",
+    "sign_in.checking": "Checking your sign-in…",
+    "sign_in.waiting": "Finish signing in with Microsoft in your browser, then come back here.",
+    "sign_in.reopen": "Open the page again",
+    "sign_in.intro": "Sign in with your Microsoft work account to use this app.",
+    "sign_in.microsoft": "Sign in with Microsoft",
+    "sign_in.quit": "Quit",
+    "sign_in.unreachable": "Could not reach the sign-in server",
+    "sign_in.offline": "offline",
+    "sign_in.sign_out": "Sign out",
+    "sign_in.cancel": "Cancel"
+  },
+  "ar": {
+    "sign_in.title": "تسجيل الدخول",
+    "sign_in.checking": "جارٍ التحقق من تسجيل دخولك…",
+    "sign_in.waiting": "أكمل تسجيل الدخول باستخدام Microsoft في المتصفح، ثم عُد إلى هنا.",
+    "sign_in.reopen": "افتح الصفحة مرة أخرى",
+    "sign_in.intro": "سجّل الدخول بحساب عمل Microsoft لاستخدام هذا التطبيق.",
+    "sign_in.microsoft": "تسجيل الدخول باستخدام Microsoft",
+    "sign_in.quit": "إنهاء",
+    "sign_in.unreachable": "تعذّر الوصول إلى خادم تسجيل الدخول",
+    "sign_in.offline": "غير متصل",
+    "sign_in.sign_out": "تسجيل الخروج",
+    "sign_in.cancel": "إلغاء"
+  },
+  "he": {
+    "sign_in.title": "התחברות",
+    "sign_in.checking": "בודק את ההתחברות שלך…",
+    "sign_in.waiting": "השלם את ההתחברות עם Microsoft בדפדפן, ואז חזור לכאן.",
+    "sign_in.reopen": "פתח את הדף שוב",
+    "sign_in.intro": "התחבר עם חשבון העבודה שלך ב-Microsoft כדי להשתמש באפליקציה.",
+    "sign_in.microsoft": "התחבר עם Microsoft",
+    "sign_in.quit": "יציאה",
+    "sign_in.unreachable": "לא ניתן להגיע לשרת ההתחברות",
+    "sign_in.offline": "לא מקוון",
+    "sign_in.sign_out": "התנתק",
+    "sign_in.cancel": "ביטול"
+  },
+  "ja": {
+    "sign_in.title": "サインイン",
+    "sign_in.checking": "サインインを確認しています…",
+    "sign_in.waiting": "ブラウザーで Microsoft のサインインを完了してから、ここに戻ってください。",
+    "sign_in.reopen": "ページをもう一度開く",
+    "sign_in.intro": "このアプリを使うには Microsoft の職場アカウントでサインインしてください。",
+    "sign_in.microsoft": "Microsoft でサインイン",
+    "sign_in.quit": "終了",
+    "sign_in.unreachable": "サインイン サーバーに接続できませんでした",
+    "sign_in.offline": "オフライン",
+    "sign_in.sign_out": "サインアウト",
+    "sign_in.cancel": "キャンセル"
+  },
+  "vi": {
+    "sign_in.title": "Đăng nhập",
+    "sign_in.checking": "Đang kiểm tra đăng nhập…",
+    "sign_in.waiting": "Hoàn tất đăng nhập Microsoft trong trình duyệt, rồi quay lại đây.",
+    "sign_in.reopen": "Mở lại trang",
+    "sign_in.intro": "Đăng nhập bằng tài khoản công việc Microsoft để dùng ứng dụng này.",
+    "sign_in.microsoft": "Đăng nhập bằng Microsoft",
+    "sign_in.quit": "Thoát",
+    "sign_in.unreachable": "Không thể kết nối máy chủ đăng nhập",
+    "sign_in.offline": "ngoại tuyến",
+    "sign_in.sign_out": "Đăng xuất",
+    "sign_in.cancel": "Hủy"
+  },
+  "zh": {
+    "sign_in.title": "登录",
+    "sign_in.checking": "正在检查您的登录…",
+    "sign_in.waiting": "请在浏览器中完成 Microsoft 登录，然后回到这里。",
+    "sign_in.reopen": "重新打开页面",
+    "sign_in.intro": "请使用您的 Microsoft 工作帐户登录以使用此应用。",
+    "sign_in.microsoft": "使用 Microsoft 登录",
+    "sign_in.quit": "退出",
+    "sign_in.unreachable": "无法连接登录服务器",
+    "sign_in.offline": "离线",
+    "sign_in.sign_out": "退出登录",
+    "sign_in.cancel": "取消"
+  }
+}

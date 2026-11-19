@@ -294,6 +294,7 @@ pub mod shell;
 #[cfg(test)]
 mod shell_face_sketch_ui_tests;
 pub mod shortcut_box;
+pub mod sign_in;
 pub mod sketch3d;
 #[cfg(test)]
 mod sketch3d_frame_ui_tests;
@@ -573,6 +574,8 @@ pub struct Services {
     /// Where the ticket server's sign-in is kept: the system keyring (the browser's storage on
     /// the web). Never a plain file.
     pub ticket_secrets: Option<std::sync::Arc<dyn agent_chat::backend::Secrets>>,
+    /// Microsoft sign-in for the internal PDM service (`sign_in`); None: no sign-in.
+    pub sign_in: Option<sign_in::Host>,
 }
 
 /// The view before a sketch opened and the view that faced the sketch then (#7038).
@@ -720,6 +723,8 @@ pub struct SolveApp {
     pub issue_report: issue_report::ReportState,
     /// Problem reports on the ticket server: sign-in, sending, the offline queue.
     pub tickets: tickets::Tickets,
+    /// Microsoft sign-in: who is signed in, and the window that asks while it is required.
+    pub sign_in: sign_in::SignIn,
     /// The Crash Reports window.
     pub crashes: crash_ui::CrashUi,
     /// The update check and its window (`update`).
@@ -999,7 +1004,8 @@ impl SolveApp {
         theme::publish_tab(&self.ui.tab, self.session.active_sketch.is_some(), self.tool.is_some() || self.dialog.is_some(), ctx);
     }
 
-    pub fn new(mut session: Session, services: Services) -> Self {
+    pub fn new(mut session: Session, mut services: Services) -> Self {
+        let sign_in = sign_in::SignIn::new(services.sign_in.take());
         // The app's catalogs, once per process; later calls find them installed.
         i18n::install();
         // The app's look (icons, glyphs and built-in theme files), likewise, before the first frame.
@@ -1074,6 +1080,7 @@ impl SolveApp {
             messages: messages::Messages::default(),
             issue_report: issue_report::ReportState::default(),
             tickets: tickets::Tickets::new(),
+            sign_in,
             crashes: crash_ui::CrashUi::default(),
             updater: update::Updater::default(),
             policy: policy::Policy::default(),
@@ -4148,6 +4155,8 @@ impl SolveApp {
         issue_report::CadInput::block(self, ui, &mut report_input);
         semantic_content::begin(self, ui.ctx());
         self.cad_ui(ui, &mut report_input);
+        // Over everything while signing in is required and nobody is signed in.
+        sign_in::show(self, ui.ctx());
         semantic_content::finalize(self, ui.ctx());
         #[cfg(not(target_arch = "wasm32"))]
         panel_runtime::show_desktop_windows(self, ui.ctx());
